@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Activity, Bell, Settings, LayoutDashboard } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Monitors from './components/Monitors';
+import Incidents from './components/Incidents';
 
 function App() {
   const [wsConnected, setWsConnected] = useState(false);
@@ -75,7 +76,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/monitors" element={<Monitors />} />
-            <Route path="/incidents" element={<div className="glass-panel">Incidents View coming soon...</div>} />
+            <Route path="/incidents" element={<Incidents />} />
           </Routes>
         </main>
       </div>
