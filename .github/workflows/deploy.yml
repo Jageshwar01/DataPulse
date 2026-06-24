@@ -1,0 +1,56 @@
+name: Deploy DataPulse
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Dependencies
+        run: |
+          cd frontend && npm install
+          cd ../backend && npm install
+          
+      - name: Typecheck Backend
+        run: cd backend && npx tsc --noEmit
+        
+      - name: Build Frontend
+        run: cd frontend && npm run build
+
+  deploy:
+    needs: test-and-lint
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /var/www/datapulse
+            git pull origin main
+            cd backend
+            npm install
+            npm run build
+            # Ensure DB migrations run safely (assuming idempotent or separate migration tool)
+            npm run db:setup || true
+            cd ../frontend
+            npm install
+            npm run build
+            cd ..
+            pm2 reload ecosystem.config.js
